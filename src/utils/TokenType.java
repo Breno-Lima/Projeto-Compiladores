@@ -1,0 +1,5 @@
+package utils;
+
+public enum TokenType {
+	IDENTIFIER, NUMBER, MATH_OPERATOR, REL_OPERATOR, ASSIGNMENT, LITERAL; 
+}
