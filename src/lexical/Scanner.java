@@ -15,8 +15,8 @@ public class Scanner {
 
     public Scanner(String source) {
         pos = 0;
-        row = 0;
-        col = 0;
+        row = 1;
+        col = 1;
         try {
             String buffer = new String(Files.readAllBytes(Paths.get(source)));
             sourceBuffer = buffer.toCharArray();
@@ -39,9 +39,12 @@ public class Scanner {
                 case 0:
                     if(isSpace(currentChar)) {
                         state = 0;
-                    } else if (currentChar == '#') {
+                    } else if (isHashtag(currentChar)) {
                         state = 14;
-                    } else if (isLetter(currentChar) || isUnderscore(currentChar)){
+                    }else if (isSpecialCharacter(currentChar)){
+                        throw new RuntimeException("Invalid Char at line " + row + ", column " + col + ": " + content + currentChar);
+                    }
+                    else if (isLetter(currentChar) || isUnderscore(currentChar)){
                         content += currentChar;
                         state = 1;
                     } else if (isMathOperator(currentChar)){
@@ -68,6 +71,9 @@ public class Scanner {
                     if( isLetter(currentChar) || isDigit(currentChar) || isUnderscore(currentChar) ) {
                         content += currentChar;
                         state = 1;
+                    }else if (isSpecialCharacter(currentChar)){
+                        throw new RuntimeException("Malformed Identifier at line " + row + ", column " + col + ": " + content + currentChar);
+
                     }
                     else {
                         if(isReserved(content)){
@@ -126,6 +132,12 @@ public class Scanner {
                     } else if (isPoint(currentChar)) {
                         back();
                         state = 13;
+                    } else if (isLetter(currentChar)) {
+                        throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
+
+                    }else if (isSpecialCharacter(currentChar)) {
+                        throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
+
                     } else {
                         back();
                         state = 12;
@@ -142,9 +154,8 @@ public class Scanner {
                         content += currentChar;
                         state = 13;
                     } else {
-                        //System.out.println("CONTENT: " + content);
                         if( content.charAt(content.length() - 1) == '.'){
-                            state = 0;
+                            throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
                         } else {
                             back();
                             state = 12;
@@ -160,10 +171,11 @@ public class Scanner {
                 default:
                     break;
             }
-
-            //System.out.println("PRINT: " + currentChar);
         }
+    }
 
+    private boolean isHashtag(char c) {
+        return c == '#';
     }
 
     private boolean isAssignment(char c) {
@@ -212,13 +224,34 @@ public class Scanner {
         return c == '(' || c == ')';
     }
 
+    private boolean isSpecialCharacter(char c) {
+        return !(isParenthesis( c) || isMathOperator( c) ||
+                isRelOperator(c) || isSpace(c) || isLetter(c) ||
+                isDigit(c) || isPoint(c) || isUnderscore(c) ||
+                isAssignment(c) || isHashtag(c));
+    }
+
     private char nextChar() {
-        return sourceBuffer[pos++];
+        char c = sourceBuffer[pos++];
+        if (c == '\n') {
+            row++;
+            col = 1;
+        } else {
+            col++;
+        }
+        return c;
     }
 
     private void back() {
         pos--;
+        char c = sourceBuffer[pos];
+        if (c == '\n') {
+            row--;
+        } else {
+            col--;
+        }
     }
+
 
     private boolean isEOF() {
         if(pos >= sourceBuffer.length) {
