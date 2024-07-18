@@ -36,7 +36,6 @@ public class Scanner {
             currentChar = nextChar();
 
             switch (state) {
-
                 case 0:
                     if(isSpace(currentChar)) {
                         state = 0;
@@ -72,8 +71,10 @@ public class Scanner {
                     }
                     else {
                         if(isReserved(content)){
+                            back();
                             state = 3;
                         } else {
+                            back();
                             state = 2;
                         }
                     }
@@ -89,10 +90,11 @@ public class Scanner {
                     back();
                     return new Token(TokenType.MATH_OPERATOR, content);
                 case 5:
-                    if(currentChar == '='){
+                    if(isAssignment(currentChar)){
                         content += currentChar;
                         state = 8;
                     } else {
+                        back();
                         state = 6;
                     }
                     break;
@@ -100,13 +102,16 @@ public class Scanner {
                     back();
                     return new Token(TokenType.ASSIGNMENT, content);
                 case 7:
-                    if(currentChar == '='){
+                    if(isAssignment(currentChar)){
+                        content+=currentChar;
                         state = 8;
                     } else {
+                        back();
                         state = 9;
                     }
                     break;
                 case 8:
+                    back();
                     return new Token(TokenType.REL_OPERATOR, content);
                 case 9:
                     back();
@@ -119,12 +124,15 @@ public class Scanner {
                         content += currentChar;
                         state = 11;
                     } else if (isPoint(currentChar)) {
+                        back();
                         state = 13;
                     } else {
+                        back();
                         state = 12;
                     }
                     break;
                 case 12:
+                    back();
                     return new Token(TokenType.NUMBER, content);
                 case 13:
                     if(isDigit(currentChar)){
@@ -134,7 +142,13 @@ public class Scanner {
                         content += currentChar;
                         state = 13;
                     } else {
-                        state = 12;
+                        //System.out.println("CONTENT: " + content);
+                        if( content.charAt(content.length() - 1) == '.'){
+                            state = 0;
+                        } else {
+                            back();
+                            state = 12;
+                        }
                     }
                     break;
                 case 14:
@@ -147,6 +161,7 @@ public class Scanner {
                     break;
             }
 
+            //System.out.println("PRINT: " + currentChar);
         }
 
     }
@@ -211,6 +226,5 @@ public class Scanner {
         }
         return false;
     }
-
-
 }
+
