@@ -3,7 +3,6 @@ package lexical;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import utils.TokenType;
 
 public class Scanner {
@@ -132,12 +131,8 @@ public class Scanner {
                     } else if (isPoint(currentChar)) {
                         back();
                         state = 13;
-                    } else if (isLetter(currentChar)) {
+                    } else if (isLetter(currentChar)||isUnderscore(currentChar)||(isSpecialCharacter(currentChar))) {
                         throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
-
-                    }else if (isSpecialCharacter(currentChar)) {
-                        throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
-
                     } else {
                         back();
                         state = 12;
@@ -252,7 +247,6 @@ public class Scanner {
         }
     }
 
-
     private boolean isEOF() {
         if(pos >= sourceBuffer.length) {
             return true;
@@ -260,4 +254,3 @@ public class Scanner {
         return false;
     }
 }
-
