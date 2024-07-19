@@ -3,6 +3,7 @@ package lexical;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
 import utils.TokenType;
 
 public class Scanner {
@@ -11,8 +12,10 @@ public class Scanner {
     private int pos;
     private int row;
     private int col;
+    private int dot;
 
     public Scanner(String source) {
+        dot = 0;
         pos = 0;
         row = 1;
         col = 1;
@@ -32,6 +35,7 @@ public class Scanner {
             if(isEOF()) {
                 return null;
             }
+
             currentChar = nextChar();
 
             switch (state) {
@@ -40,10 +44,9 @@ public class Scanner {
                         state = 0;
                     } else if (isHashtag(currentChar)) {
                         state = 14;
-                    }else if (isSpecialCharacter(currentChar)){
+                    } else if (isSpecialCharacter(currentChar)){
                         throw new RuntimeException("Invalid Char at line " + row + ", column " + col + ": " + content + currentChar);
-                    }
-                    else if (isLetter(currentChar) || isUnderscore(currentChar)){
+                    } else if (isLetter(currentChar) || isUnderscore(currentChar)){
                         content += currentChar;
                         state = 1;
                     } else if (isMathOperator(currentChar)){
@@ -70,18 +73,14 @@ public class Scanner {
                     if( isLetter(currentChar) || isDigit(currentChar) || isUnderscore(currentChar) ) {
                         content += currentChar;
                         state = 1;
-                    }else if (isSpecialCharacter(currentChar)){
+                    } else if(isReserved(content)){
+                        back();
+                        state = 3;
+                    } else if (isSpecialCharacter(currentChar)){
                         throw new RuntimeException("Malformed Identifier at line " + row + ", column " + col + ": " + content + currentChar);
-
-                    }
-                    else {
-                        if(isReserved(content)){
-                            back();
-                            state = 3;
-                        } else {
-                            back();
-                            state = 2;
-                        }
+                    } else {
+                        back();
+                        state = 2;
                     }
                     break;
 
@@ -129,9 +128,10 @@ public class Scanner {
                         content += currentChar;
                         state = 11;
                     } else if (isPoint(currentChar)) {
+                        dot++;
                         back();
                         state = 13;
-                    } else if (isLetter(currentChar)||isUnderscore(currentChar)||(isSpecialCharacter(currentChar))) {
+                    } else if (isLetter(currentChar) || isSpecialCharacter(currentChar)) {
                         throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
                     } else {
                         back();
@@ -142,19 +142,20 @@ public class Scanner {
                     back();
                     return new Token(TokenType.NUMBER, content);
                 case 13:
-                    if(isDigit(currentChar)){
+                    if (isDigit(currentChar)){
                         content += currentChar;
                         state = 13;
                     } else if (isPoint(currentChar)) {
+                        dot += 1;
                         content += currentChar;
                         state = 13;
+                    } else if( content.charAt(content.length() - 1) == '.' || dot > 2){
+                        back();
+                        back();
+                        throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
                     } else {
-                        if( content.charAt(content.length() - 1) == '.'){
-                            throw new RuntimeException("Malformed number at line " + row + ", column " + col + ": " + content + currentChar);
-                        } else {
-                            back();
-                            state = 12;
-                        }
+                        back();
+                        state = 12;
                     }
                     break;
                 case 14:
@@ -254,3 +255,4 @@ public class Scanner {
         return false;
     }
 }
+

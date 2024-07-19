@@ -1,3 +1,4 @@
-x soma y
- soma2
-  12 22
+# meu comentario
+if(x>=y)
+soma=12-22
+55.
